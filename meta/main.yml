@@ -1,0 +1,19 @@
+---
+dependencies: []
+galaxy_info:
+  author: Julian Easterling
+  description: Ansible role to attach iSCSI volumes and prepare their filesystems
+  galaxy_tags:
+    - iscsi
+    - dcjulian29
+  license: Apache-2.0
+  min_ansible_version: "2.18.4"
+  namespace: dcjulian29
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+    - name: EL
+      versions:
+        - 10
+  role_name: iscsi
