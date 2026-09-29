@@ -1,3 +1,4 @@
-#SPDX-License-Identifier: MIT-0
 ---
-# defaults file for iscsi
+iscsi_initiator: ""
+iscsi_port: 3260
+iscsi_volumes: []

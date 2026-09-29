@@ -1,3 +1,65 @@
-#SPDX-License-Identifier: MIT-0
 ---
-# tasks file for iscsi
+- name: Include OS-specific variables.
+  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts['distribution'] | lower }}.yml"
+        - "{{ ansible_facts['os_family'] | lower }}.yml"
+      paths:
+        - vars
+
+- name: Ensure the iSCSI initiator is installed
+  ansible.builtin.package:
+    name: "{{ iscsi_package }}"
+    state: present
+
+- name: Ensure the iSCSI initiator name is configured
+  ansible.builtin.copy:
+    content: "InitiatorName={{ iscsi_initiator }}\n"
+    dest: /etc/iscsi/initiatorname.iscsi
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart iscsid
+  when: iscsi_initiator | length > 0
+
+- name: Force all notified handlers to run at this point
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure the iSCSI services are enabled
+  ansible.builtin.service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop: "{{ iscsi_services }}"
+
+- name: Ensure the iSCSI volumes are attached
+  community.general.open_iscsi:
+    auto_node_startup: true
+    discover: true
+    login: true
+    portal: "{{ item.portal }}"
+    port: "{{ item.port | default(iscsi_port) | string }}"
+    target: "{{ item.target }}"
+  loop: "{{ iscsi_volumes }}"
+  loop_control:
+    label: "{{ item.target }}"
+
+- name: Wait for the iSCSI volumes to appear
+  ansible.builtin.wait_for:
+    path: "{{ _iscsi_device }}"
+    timeout: 30
+  loop: "{{ iscsi_volumes }}"
+  loop_control:
+    label: "{{ _iscsi_device }}"
+
+- name: Ensure the iSCSI volumes have a filesystem
+  community.general.filesystem:
+    dev: "{{ _iscsi_device }}"
+    fstype: "{{ item.fstype | default('ext4') }}"
+    opts: "-L {{ item.label }}"
+  loop: "{{ iscsi_volumes }}"
+  loop_control:
+    label: "{{ item.label | default(item.target) }}"
+  when: item.label is defined

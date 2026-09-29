@@ -1,0 +1,4 @@
+---
+iscsi_package: iscsi-initiator-utils
+iscsi_services:
+  - iscsi

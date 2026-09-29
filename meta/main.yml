@@ -15,5 +15,5 @@ galaxy_info:
         - bookworm
     - name: EL
       versions:
-        - 10
+        - "10"
   role_name: iscsi

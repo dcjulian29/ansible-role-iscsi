@@ -1,3 +1,5 @@
-#SPDX-License-Identifier: MIT-0
 ---
-# vars file for iscsi
+# /dev/sdX is not stable across reboots; the by-path name is.
+_iscsi_device: >-
+  {{ '/dev/disk/by-path/ip-%s:%s-iscsi-%s-lun-%s' | format(item.portal,
+  item.port | default(iscsi_port), item.target, item.lun | default(0)) }}

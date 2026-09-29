@@ -1,0 +1,4 @@
+---
+iscsi_package: open-iscsi
+iscsi_services:
+  - open-iscsi
