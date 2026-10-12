@@ -34,10 +34,22 @@
     state: started
   loop: "{{ iscsi_services }}"
 
+# Discovery resets node.startup to manual, so discover combined with
+# auto_node_startup reports changed on every run. Only discover a target the
+# node database doesn't hold yet. iscsiadm exits 21 when it holds none.
+- name: List the iSCSI targets already discovered
+  ansible.builtin.command: iscsiadm -m node
+  register: _iscsi_nodes
+  changed_when: false
+  failed_when: _iscsi_nodes.rc not in [0, 21]
+
 - name: Ensure the iSCSI volumes are attached
   community.general.open_iscsi:
     auto_node_startup: true
-    discover: true
+    # Lines read "<portal>:<port>,<tpgt> <target>"; compare the target field.
+    discover: >-
+      {{ item.target not in (_iscsi_nodes.stdout_lines
+         | map('split') | map('last') | list) }}
     login: true
     portal: "{{ item.portal }}"
     port: "{{ item.port | default(iscsi_port) | string }}"
